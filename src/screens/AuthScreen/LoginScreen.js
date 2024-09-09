@@ -1,5 +1,6 @@
 import {
   Image,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,8 +16,12 @@ import CustomButton from '../../components/CustomButton';
 import {loginApi} from '../../api';
 import {showMessage} from 'react-native-flash-message';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {setIsLoggedIn, setUserData} from '../../redux/reducer/user';
+import {useDispatch} from 'react-redux';
 
 const LoginScreen = ({navigation}) => {
+  const dispatch = useDispatch();
   const [isSecure, setIsSecure] = useState(true);
   const [loading, setLoading] = useState(false);
   const [valErrors, setValErrors] = useState({});
@@ -27,12 +32,16 @@ const LoginScreen = ({navigation}) => {
   });
 
   const signInApi = async () => {
+    Keyboard.dismiss();
     setValErrors({});
     setLoading(true);
     const res = await loginApi({...formValues});
     console.log(res);
     if (res?.status == true) {
-      navigation.navigate('Home');
+      AsyncStorage.setItem('userData', res?.data);
+      dispatch(setUserData(JSON.stringify(res?.data)));
+      AsyncStorage.setItem('isLogin', 'true');
+      dispatch(setIsLoggedIn(true));
     } else {
       setValErrors(res?.errros);
       res?.message &&

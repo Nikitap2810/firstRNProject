@@ -1,5 +1,6 @@
 import {
   Image,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,28 +12,38 @@ import CustomTextInput from '../../components/CustomTextInput';
 import {TextInput} from 'react-native-paper';
 import {formData} from '../../config/formdata';
 import CustomButton from '../../components/CustomButton';
-import {registerApi} from '../../api';
 import {showMessage} from 'react-native-flash-message';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {loginApi, signUpApi} from '../../api';
+import {useDispatch} from 'react-redux';
+import {setIsLoggedIn, setUserData} from '../../redux/reducer/user';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RegisterScreen = ({navigation}) => {
+  const dispatch = useDispatch();
   const [isSecure, setIsSecure] = useState(true);
   const [loading, setLoading] = useState(false);
   const [valErrors, setValErrors] = useState({});
   const [agree, setAgree] = useState(false);
 
   const [formValues, handleFormValueChange, setFormValues] = formData({
+    name: '',
     phone: '',
     password: '',
-    name: '',
   });
 
-  const signUpApi = async () => {
+  const register = async () => {
+    Keyboard.dismiss();
     setValErrors({});
     setLoading(true);
-    const res = await registerApi({...formValues});
+    const res = await signUpApi({...formValues});
     console.log(res);
     if (res?.status == true) {
+      AsyncStorage.setItem('userData', res?.data);
+      dispatch(setUserData(JSON.stringify(res?.data)));
+      AsyncStorage.setItem('isLogin', 'true');
+      dispatch(setIsLoggedIn(true));
+      navigation.navigate('Home');
     } else {
       setValErrors(res?.errros);
       res?.message &&
@@ -118,7 +129,7 @@ const RegisterScreen = ({navigation}) => {
         <CustomButton
           loading={loading}
           disabled={loading}
-          onPress={signUpApi}
+          onPress={() => register()}
           style={{marginTop: 20}}>
           Sign Up
         </CustomButton>
